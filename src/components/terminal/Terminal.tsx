@@ -32,11 +32,14 @@ export default function Terminal({ fullscreen = false, className = "" }: Termina
   const [value, setValue] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [hIndex, setHIndex] = useState(-1);
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-scroll only the terminal's own output box — never the page. (Using
+  // scrollIntoView here would jump the whole page down to the terminal on load.)
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [lines]);
 
   const submit = (raw: string) => {
@@ -103,7 +106,7 @@ export default function Terminal({ fullscreen = false, className = "" }: Termina
       </div>
 
       {/* output */}
-      <div className="flex-1 space-y-0.5 overflow-y-auto p-4">
+      <div ref={scrollRef} className="flex-1 space-y-0.5 overflow-y-auto p-4">
         {lines.map((l, i) =>
           l.type === "in" ? (
             <div key={i} className="text-ink/90">
@@ -127,25 +130,24 @@ export default function Terminal({ fullscreen = false, className = "" }: Termina
             </div>
           )
         )}
-        <div ref={endRef} />
-      </div>
 
-      {/* prompt */}
-      <div className="flex items-center gap-2 border-t border-white/10 px-4 py-3">
-        <span className="text-neon">visitor@msn-os</span>
-        <span className="text-ink/40">:~$</span>
-        <input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={onKey}
-          spellCheck={false}
-          autoComplete="off"
-          aria-label="Terminal command input"
-          className="flex-1 bg-transparent text-ink outline-none placeholder:text-ink/30"
-          placeholder="type a command… (help)"
-        />
-        <span className="animate-blink text-neon">▍</span>
+        {/* live prompt — typed inline as the last line, like a real shell */}
+        <div className="flex items-center gap-2">
+          <span className="text-neon">visitor@msn-os</span>
+          <span className="text-ink/40">:~$</span>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={onKey}
+            spellCheck={false}
+            autoComplete="off"
+            aria-label="Terminal command input"
+            className="flex-1 bg-transparent text-ink caret-[rgb(var(--neon))] outline-none focus:outline-none focus-visible:outline-none placeholder:text-ink/30"
+            style={{ outline: "none", boxShadow: "none" }}
+            placeholder="type a command… (help)"
+          />
+        </div>
       </div>
     </div>
   );
