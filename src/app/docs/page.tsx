@@ -88,6 +88,14 @@ export default function DocsPage() {
           variants separate.
         </p>
 
+        <h2 className="mt-10 font-display text-xl font-bold text-ink">On-device AI</h2>
+        <p className="mt-4 leading-relaxed">
+          The MSN AI chat assistant runs <a className="text-neon hover:underline" href="https://github.com/cactus-compute/needle" target="_blank" rel="noopener noreferrer">Needle 2</a> — a
+          14MB tool-calling model — fully in your browser (WebAssembly, no server, no API key).
+          It routes questions to the same tools exposed above; every answer is generated
+          deterministically from the site&apos;s data, with a scripted fallback.
+        </p>
+
         <h2 className="mt-10 font-display text-xl font-bold text-ink">Agent indexes</h2>
         <ul className="mt-4 list-disc space-y-1 pl-5 leading-relaxed">
           <li><a className="text-neon hover:underline" href="/llms.txt">llms.txt</a> — when to use this site, and how</li>
