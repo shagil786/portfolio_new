@@ -3,7 +3,7 @@ import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { profile, links } from "@/data/portfolioData";
+import { profile, links, education } from "@/data/portfolioData";
 import { SITE_URL } from "@/lib/site";
 
 const mono = JetBrains_Mono({
@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     template: `%s · ${profile.shortName} OS`,
   },
   description,
+  alternates: { canonical: "/" },
   keywords: [
     "Md Shagil Nizami",
     "Software Development Engineer",
@@ -64,14 +65,66 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Person",
-    name: profile.name,
-    jobTitle: profile.role,
-    worksFor: { "@type": "Organization", name: profile.company },
-    address: { "@type": "PostalAddress", addressLocality: profile.location },
-    email: links.email,
-    url: links.portfolio,
-    sameAs: [links.github, links.linkedin],
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": `${SITE_URL}/#person`,
+        name: profile.name,
+        alternateName: profile.shortName,
+        description: profile.summary,
+        disambiguatingDescription: `${profile.role} at ${profile.company} based in ${profile.location}, specializing in ${profile.specializations.slice(0, 3).join(", ")}.`,
+        jobTitle: profile.role,
+        worksFor: { "@id": `${SITE_URL}/#organization` },
+        alumniOf: {
+          "@type": "CollegeOrUniversity",
+          name: education[0]?.institution,
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Bangalore",
+          addressRegion: "Karnataka",
+          addressCountry: "IN",
+        },
+        email: `mailto:${links.email}`,
+        telephone: links.phone,
+        url: SITE_URL,
+        knowsAbout: profile.specializations,
+        sameAs: [links.github, links.linkedin],
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "MSN OS",
+        url: SITE_URL,
+        description: `Personal portfolio and command center of ${profile.name}, ${profile.role} at ${profile.company}.`,
+        founder: { "@id": `${SITE_URL}/#person` },
+        email: links.email,
+        telephone: links.phone,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Bangalore",
+          addressRegion: "Karnataka",
+          addressCountry: "IN",
+        },
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "recruiting and business inquiries",
+          email: links.email,
+          telephone: links.phone,
+          availableLanguage: ["English"],
+        },
+        sameAs: [links.github, links.linkedin],
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: `${profile.shortName} OS`,
+        description,
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        inLanguage: "en",
+      },
+    ],
   };
 
   return (
