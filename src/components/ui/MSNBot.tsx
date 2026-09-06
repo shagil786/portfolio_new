@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/useGameStore";
 import { botReply, QUICK_REPLIES } from "@/lib/botEngine";
+import {
+  ensureNeedle,
+  getNeedleStatus,
+  needleComplete,
+  onNeedleStatus,
+  type NeedleStatus,
+} from "@/lib/agentClient";
+import { interpretNeedleResponse } from "@/lib/agentBrain";
 import { sfx } from "@/lib/sounds";
 
 interface ChatMsg {
@@ -35,7 +43,15 @@ export default function MSNBot() {
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [brainStatus, setBrainStatus] = useState<NeedleStatus>(getNeedleStatus());
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => onNeedleStatus(setBrainStatus), []);
+
+  // Warm the on-device model once the chat is opened the first time.
+  useEffect(() => {
+    if (open) ensureNeedle();
+  }, [open]);
 
   const tip = TIPS[active] ?? TIPS.hero;
 
@@ -58,13 +74,31 @@ export default function MSNBot() {
     setInput("");
     setTyping(true);
     sfx.blip(muted);
-    const reply = botReply(q);
-    const delay = Math.min(900, 250 + reply.length * 4);
-    setTimeout(() => {
+
+    const respond = (reply: string) => {
       setMessages((m) => [...m, { from: "bot", text: reply }]);
       setTyping(false);
       sfx.blip(muted);
-    }, delay);
+    };
+
+    // On-device Needle model first; scripted bot below its confidence floor.
+    needleComplete(q)
+      .then((envelope) => {
+        if (envelope) {
+          const result = interpretNeedleResponse(envelope);
+          if (result.usedModel) return result.reply;
+        }
+      })
+      .catch(() => undefined)
+      .then((modeled) => {
+        if (modeled) {
+          respond(modeled);
+          return;
+        }
+        const scripted = botReply(q);
+        const delay = Math.min(900, 250 + scripted.length * 4);
+        setTimeout(() => respond(scripted), delay);
+      });
   };
 
   const toggle = () => {
@@ -105,7 +139,11 @@ export default function MSNBot() {
                 <span className="h-2 w-2 animate-pulseGlow rounded-full bg-neon" />
                 <span className="font-display text-sm font-bold neon-text">MSN AI</span>
                 <span className="font-mono text-[9px] uppercase tracking-widest text-ink/40">
-                  assistant
+                  {brainStatus === "ready"
+                    ? "on-device brain"
+                    : brainStatus === "loading"
+                      ? "loading brain…"
+                      : "assistant"}
                 </span>
               </div>
               <button
