@@ -17,9 +17,14 @@
  */
 
 const NEEDLE_DIR = "/needle";
-// Overridden by the system prompt posted with the init message (single source
-// of truth lives in src/lib/agentBrain.ts).
+// The real system prompt is posted with the init message (single source of
+// truth lives in src/lib/agentBrain.ts); this is only a safety default.
 const SYSTEM_PROMPT = "";
+// A LoRA-tuned model can be dropped in as /needle/tuned.cact to activate it;
+// otherwise the base needle2.cact is used. (Fine-tuned weights report
+// uncalibrated confidence — the pipeline treats missing confidence as
+// pass-through, see agentBrain.)
+const BASE_WEIGHTS = "/needle/needle2.cact";
 
 let modulePromise = null;
 let ready = false;
@@ -45,7 +50,8 @@ async function loadEngine(toolsJson, systemPrompt) {
     printErr: () => {},
   });
 
-  const weightsRes = await fetch(`${NEEDLE_DIR}/needle2.cact`);
+  let weightsRes = await fetch(`${NEEDLE_DIR}/tuned.cact`);
+  if (!weightsRes.ok) weightsRes = await fetch(BASE_WEIGHTS);
   if (!weightsRes.ok) throw new Error(`weights fetch failed: ${weightsRes.status}`);
   const weights = new Uint8Array(await weightsRes.arrayBuffer());
 

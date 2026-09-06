@@ -21,6 +21,12 @@ export interface AgentPolicy {
   allowedTools: string[];
   /** Generation cap per routing turn. */
   maxNewTokens: number;
+  /**
+   * Whether "action" tools (theme, sound, navigation, recruiter view) may run.
+   * Read tools are always allowed; flipping this off mutes the agent's ability
+   * to operate the site without touching its ability to answer questions.
+   */
+  uiActionsAllowed: boolean;
 }
 
 export const BASE_POLICY: AgentPolicy = {
@@ -28,6 +34,7 @@ export const BASE_POLICY: AgentPolicy = {
   maxTurnsPerSession: 40,
   allowedTools: AGENT_TOOL_SCHEMAS.map((t) => t.name),
   maxNewTokens: 256,
+  uiActionsAllowed: true,
 };
 
 export interface ToolCall {
@@ -66,6 +73,12 @@ export function validateEnvelopeToolCalls(
   for (const call of calls ?? []) {
     if (!policy.allowedTools.includes(call.name)) {
       return { valid: false, reason: `tool not allowed by policy: ${call.name}` };
+    }
+    if (
+      !policy.uiActionsAllowed &&
+      AGENT_TOOL_SCHEMAS.find((t) => t.name === call.name)?.kind === "action"
+    ) {
+      return { valid: false, reason: `ui actions disabled by policy: ${call.name}` };
     }
     const check = validateToolCall(call);
     if (!check.valid) return check;
