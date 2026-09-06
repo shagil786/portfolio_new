@@ -7,11 +7,10 @@ import { botReply, QUICK_REPLIES } from "@/lib/botEngine";
 import {
   ensureNeedle,
   getNeedleStatus,
-  needleComplete,
   onNeedleStatus,
   type NeedleStatus,
 } from "@/lib/agentClient";
-import { interpretNeedleResponse } from "@/lib/agentBrain";
+import { runAgentTurn } from "@/lib/agent/pipeline";
 import { sfx } from "@/lib/sounds";
 
 interface ChatMsg {
@@ -81,23 +80,20 @@ export default function MSNBot() {
       sfx.blip(muted);
     };
 
-    // On-device Needle model first; scripted bot below its confidence floor.
-    needleComplete(q)
-      .then((envelope) => {
-        if (envelope) {
-          const result = interpretNeedleResponse(envelope);
-          if (result.usedModel) return result.reply;
-        }
-      })
-      .catch(() => undefined)
-      .then((modeled) => {
-        if (modeled) {
-          respond(modeled);
+    // Full layered pipeline: memory → governance → on-device model + tools →
+    // learning. Scripted bot stays as the deterministic fallback.
+    runAgentTurn(q, botReply)
+      .then(({ reply, usedModel }) => {
+        if (usedModel) {
+          respond(reply);
           return;
         }
-        const scripted = botReply(q);
-        const delay = Math.min(900, 250 + scripted.length * 4);
-        setTimeout(() => respond(scripted), delay);
+        const delay = Math.min(900, 250 + reply.length * 4);
+        setTimeout(() => respond(reply), delay);
+      })
+      .catch(() => {
+        const fallback = botReply(q);
+        setTimeout(() => respond(fallback), 300);
       });
   };
 
