@@ -4,9 +4,10 @@ import {
   executeTool,
   formatToolData,
 } from "@/lib/agentTools";
+import { useGameStore } from "@/store/useGameStore";
 
 describe("AGENT_TOOL_SCHEMAS", () => {
-  it("covers the same tools as the site MCP server", () => {
+  it("covers the data tools and the UI action tools", () => {
     const names = AGENT_TOOL_SCHEMAS.map((t) => t.name);
     expect(names).toEqual([
       "get_profile",
@@ -16,7 +17,13 @@ describe("AGENT_TOOL_SCHEMAS", () => {
       "get_achievements",
       "get_education",
       "get_contact",
+      "set_theme",
+      "set_muted",
+      "open_section",
+      "toggle_recruiter",
     ]);
+    const actions = AGENT_TOOL_SCHEMAS.filter((t) => t.kind === "action").map((t) => t.name);
+    expect(actions).toEqual(["set_theme", "set_muted", "open_section", "toggle_recruiter"]);
   });
 
   it("uses closed enum sets so constrained decoding stays valid", () => {
@@ -69,6 +76,37 @@ describe("executeTool", () => {
     expect(executeTool("delete_everything")).toEqual({
       error: "unknown tool: delete_everything",
     });
+  });
+
+  it("set_theme changes the real store theme and returns its label", () => {
+    const before = useGameStore.getState().theme;
+    const data = executeTool("set_theme", { theme: "purple" }) as {
+      theme: string;
+      label: string;
+    };
+    expect(useGameStore.getState().theme).toBe("purple");
+    expect(data.theme).toBe("purple");
+    expect(data.label).toBe("Cyber Purple");
+    useGameStore.getState().setTheme(before);
+  });
+
+  it("set_muted turns sound off and on", () => {
+    const before = useGameStore.getState().muted;
+    const off = executeTool("set_muted", { sound: "off" }) as { muted: boolean };
+    expect(useGameStore.getState().muted).toBe(true);
+    expect(off.muted).toBe(true);
+    const on = executeTool("set_muted", { sound: "on" }) as { muted: boolean };
+    expect(on.muted).toBe(false);
+    expect(useGameStore.getState().muted).toBe(false);
+    useGameStore.setState({ muted: before });
+  });
+
+  it("toggle_recruiter flips and reports the mode", () => {
+    const before = useGameStore.getState().recruiterMode;
+    const result = executeTool("toggle_recruiter") as { recruiterMode: boolean };
+    expect(result.recruiterMode).toBe(!before);
+    expect(useGameStore.getState().recruiterMode).toBe(!before);
+    useGameStore.getState().toggleRecruiter();
   });
 });
 

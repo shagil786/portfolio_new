@@ -44,6 +44,21 @@ describe("governance — policy", () => {
     expect(validateEnvelopeToolCalls(undefined, BASE_POLICY).valid).toBe(true);
   });
 
+  it("allows action tools by default but blocks them when policy disables them", () => {
+    expect(
+      validateEnvelopeToolCalls([{ name: "set_theme", arguments: { theme: "purple" } }], BASE_POLICY).valid
+    ).toBe(true);
+    const noActions = { ...BASE_POLICY, uiActionsAllowed: false };
+    const check = validateEnvelopeToolCalls(
+      [{ name: "set_theme", arguments: { theme: "purple" } }],
+      noActions
+    );
+    expect(check.valid).toBe(false);
+    expect(check.reason).toContain("ui actions disabled");
+    // Read tools stay allowed when actions are off.
+    expect(validateEnvelopeToolCalls([{ name: "get_profile" }], noActions).valid).toBe(true);
+  });
+
   it("stops the session at the policy cap", () => {
     expect(turnsRemaining(BASE_POLICY.maxTurnsPerSession, BASE_POLICY).valid).toBe(false);
     expect(turnsRemaining(0, BASE_POLICY).valid).toBe(true);

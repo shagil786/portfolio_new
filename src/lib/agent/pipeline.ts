@@ -13,6 +13,7 @@ import {
   type AgentPolicy,
 } from "@/lib/agent/governance";
 import { relatedLine } from "@/lib/agent/graph";
+import { matchActionIntent } from "@/lib/agent/actions";
 import { needleComplete, ensureNeedle } from "@/lib/agentClient";
 import { executeTool, formatToolData } from "@/lib/agentTools";
 import { interpretNeedleResponse } from "@/lib/agentBrain";
@@ -122,10 +123,18 @@ export async function runAgentTurn(
   }
 
   if (!usedModel) {
-    const scriptedReply = scripted(q);
-    // GRAPH enrichment — add one related fact line when the data has one.
-    const extra = relatedLine(q);
-    reply = extra ? `${scriptedReply}\n\n${extra}` : scriptedReply;
+    // Second fallback stage — deterministic action matcher catches obvious
+    // UI operations ("make it purple", "mute") the small model missed.
+    const actionReply = matchActionIntent(q);
+    if (actionReply) {
+      reply = actionReply;
+      tools = ["action:scripted"];
+    } else {
+      const scriptedReply = scripted(q);
+      // GRAPH enrichment — add one related fact line when the data has one.
+      const extra = relatedLine(q);
+      reply = extra ? `${scriptedReply}\n\n${extra}` : scriptedReply;
+    }
   }
 
   // LEARNING — record the outcome and let it mutate policy next turn.

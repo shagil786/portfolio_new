@@ -44,7 +44,10 @@ export const AGENT_SYSTEM_PROMPT =
   "Examples: 'what did he do at Finbox' -> get_experience(company=\"Finbox\"); " +
   "'show me his projects' -> get_projects(); 'how do I contact him' -> get_contact(); " +
   "'who is he' -> get_profile(); 'what tech does he know' -> get_skills(); " +
-  "'where did he study' -> get_education(); 'what impact did he have' -> get_achievements().";
+  "'where did he study' -> get_education(); 'what impact did he have' -> get_achievements(); " +
+  "'make it purple' -> set_theme(theme=\"purple\"); 'mute the sounds' -> set_muted(sound=\"off\"); " +
+  "'open the projects section' -> open_section(section=\"projects\"); " +
+  "'recruiter mode' -> toggle_recruiter().";
 
 export type ToolExecutor = (name: string, args: Record<string, unknown>) => unknown;
 

@@ -93,10 +93,24 @@ describe("needle WASM engine (shipped assets)", () => {
       expect(tool.parameters.type).toBe("object");
     }
 
-    // And executing the tools the engine may call always yields formattable data.
+    // And executing the tools the engine may call always yields formattable
+    // data — with the required args each schema declares.
+    const requiredArgs: Record<string, Record<string, unknown>> = {
+      get_experience: { company: "Finbox" },
+      get_projects: { category: "Finance" },
+      open_section: { section: "projects" },
+      set_theme: { theme: "purple" },
+      set_muted: { sound: "off" },
+    };
     for (const tool of AGENT_TOOL_SCHEMAS) {
-      const data = executeTool(tool.name, {});
+      const data = executeTool(tool.name, requiredArgs[tool.name] ?? {});
+      expect(data).not.toHaveProperty("error");
       expect(formatToolData(tool.name, data).length).toBeGreaterThan(0);
+    }
+    // Defensive execution: action tools without args report errors instead of
+    // throwing, whatever the model emits.
+    for (const name of ["set_theme", "set_muted", "open_section"]) {
+      expect(executeTool(name, {})).toHaveProperty("error");
     }
   }, 120_000);
 });
