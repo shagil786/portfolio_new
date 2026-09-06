@@ -13,12 +13,17 @@ import { AGENT_TOOL_SCHEMAS, executeTool, formatToolData } from "@/lib/agentTool
  * a JS runtime (the same emscripten module the Web Worker loads), driven with
  * the same tool schemas the site deploys. Proves the on-device brain actually
  * produces tool calls — not just that the TypeScript layers are sound.
+ * Both shipped weight files are exercised: the base (needle2.cact) and the
+ * fine-tuned brain the worker prefers (tuned.cact).
  */
 const require = createRequire(import.meta.url);
 const createNeedle = require(join(__dirname, "..", "public", "needle", "needle.js"));
-const weights = readFileSync(join(__dirname, "..", "public", "needle", "needle2.cact"));
 
-async function makeEngine() {
+function loadWeights(file: string): Uint8Array {
+  return readFileSync(join(__dirname, "..", "public", "needle", file));
+}
+
+async function makeEngine(weights: Uint8Array) {
   const Module = await createNeedle();
   const ptr = Module._malloc(weights.length);
   new Uint8Array(Module.HEAPU8.buffer, ptr, weights.length).set(weights);
@@ -55,8 +60,8 @@ function complete(Module: unknown, input: string): unknown {
 }
 
 describe("needle WASM engine (shipped assets)", () => {
-  it("loads the real weights and emits grammar-valid tool calls", async () => {
-    const Module = await makeEngine();
+  it("loads the real base weights and emits grammar-valid tool calls", async () => {
+    const Module = await makeEngine(loadWeights("needle2.cact"));
 
     // Contact question — the model may route it to get_contact or respond
     // without a call (45M model; the brain falls back to the scripted bot in
@@ -93,10 +98,50 @@ describe("needle WASM engine (shipped assets)", () => {
       expect(tool.parameters.type).toBe("object");
     }
 
-    // And executing the tools the engine may call always yields formattable data.
+    // And executing the tools the engine may call always yields formattable
+    // data — with the required args each schema declares.
+    const requiredArgs: Record<string, Record<string, unknown>> = {
+      get_experience: { company: "Finbox" },
+      get_projects: { category: "Finance" },
+      open_section: { section: "projects" },
+      set_theme: { theme: "purple" },
+      set_muted: { sound: "off" },
+    };
     for (const tool of AGENT_TOOL_SCHEMAS) {
-      const data = executeTool(tool.name, {});
+      const data = executeTool(tool.name, requiredArgs[tool.name] ?? {});
+      expect(data).not.toHaveProperty("error");
       expect(formatToolData(tool.name, data).length).toBeGreaterThan(0);
+    }
+    // Defensive execution: action tools without args report errors instead of
+    // throwing, whatever the model emits.
+    for (const name of ["set_theme", "set_muted", "open_section"]) {
+      expect(executeTool(name, {})).toHaveProperty("error");
+    }
+  }, 120_000);
+
+  it("loads the fine-tuned weights the worker prefers and stays safe", async () => {
+    const Module = await makeEngine(loadWeights("tuned.cact"));
+
+    // Same invariant as the base test, on the weights actually served:
+    // whatever the tuned model emits must be a known tool with grammar-valid
+    // arguments, and the brain must either answer or fall back — never crash.
+    // (Do not assert a specific route: 45M sampling is noisy; the deterministic
+    // layers guarantee behavior, this asserts the contract.)
+    for (const q of ["mute the sounds", "recruiter mode", "make it purple"]) {
+      const envelope = complete(Module, q) as {
+        function_calls?: Array<{ name: string; arguments?: Record<string, unknown> }>;
+        confidence?: number | null;
+      };
+      expect(typeof envelope).toBe("object");
+      for (const call of envelope.function_calls ?? []) {
+        expect(AGENT_TOOL_SCHEMAS.some((t) => t.name === call.name)).toBe(true);
+        const schema = AGENT_TOOL_SCHEMAS.find((t) => t.name === call.name)!;
+        for (const req of schema.parameters.required) {
+          expect(call.arguments).toHaveProperty(req);
+        }
+      }
+      const result = interpretNeedleResponse(envelope);
+      expect(result.usedModel || (result.fallbackReason?.length ?? 0) > 0).toBe(true);
     }
   }, 120_000);
 });
