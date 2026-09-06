@@ -6,6 +6,8 @@
  * recruiter resume view, achievements, and every route.
  */
 
+import { SITE_URL } from "@/lib/site";
+
 export interface ProfileData {
   name: string;
   shortName: string;
@@ -102,7 +104,7 @@ export const links: LinkData = {
   phone: "+91 7975673079",
   github: "https://github.com/shagil786",
   linkedin: "https://www.linkedin.com/in/msn007",
-  portfolio: "https://shagilhmx.github.io/portfolio/",
+  portfolio: SITE_URL,
   resume: "/resume.pdf",
 };
 

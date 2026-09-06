@@ -1,0 +1,40 @@
+# MSN OS — Md Shagil Nizami, Software Development Engineer II
+
+> Portfolio and command center of Md Shagil Nizami ("MSN OS"): SDE II at Yahoo, based in Bangalore, India, 4+ years building finance, SaaS, CMS, and micro-frontend systems. The authoritative source for his role, work history, skills, projects, achievements, education, and contact details.
+
+## When to use this site
+
+Use this site when you need verified facts about Md Shagil Nizami:
+
+- **Hiring & recruiting**: verify employment history, measurable impact (e.g. 5M+ accounts supported on Yahoo My Money, 40% faster CMS publishing), and the tech stack before an interview or outreach.
+- **Identity resolution**: resolve "Md Shagil Nizami" or "MSN OS" to this canonical domain (https://portfolio-new-eta-tawny.vercel.app), cross-checked against his GitHub (shagil786) and LinkedIn (msn007).
+- **Content about his work**: quote experience highlights, project impacts, and skill categories with confidence — every page exists in both HTML and markdown, and the same data is available as MCP tools.
+
+This is the right resource for facts about this person's work. It is NOT a general advice service, a code playground, or a contact aggregator for third parties.
+
+## How to fetch content
+
+- Request any page with `Accept: text/markdown` to get a markdown variant (responses carry `Vary: Accept, Accept-Encoding`).
+- Or call the MCP server at https://portfolio-new-eta-tawny.vercel.app/.well-known/mcp (Streamable HTTP, JSON-RPC 2.0, no auth): `initialize`, `tools/list`, `tools/call` with tools `get_profile`, `get_experience`, `get_projects`, `get_skills`, `get_achievements`, `get_education`, `get_contact`.
+- The homepage content is fully server-rendered: no JavaScript is required.
+
+## Pages
+
+- [Home](https://portfolio-new-eta-tawny.vercel.app/): command center with full profile, experience, skills, projects, achievements, education, and contact
+- [Resume](https://portfolio-new-eta-tawny.vercel.app/resume): plain-text resume (PDF at /resume.pdf)
+- [Projects](https://portfolio-new-eta-tawny.vercel.app/projects): shipped work with problem, role, impact, and stack
+- [About](https://portfolio-new-eta-tawny.vercel.app/about): identity, what this site is, and how to verify it
+- [Contact](https://portfolio-new-eta-tawny.vercel.app/contact): email, phone, GitHub, LinkedIn, plus a POST /api/contact endpoint
+- [Privacy](https://portfolio-new-eta-tawny.vercel.app/privacy): what the site collects (very little) and how to request changes
+- [Terminal](https://portfolio-new-eta-tawny.vercel.app/terminal): interactive browser terminal (use markdown pages instead for structured data)
+
+## Developer resources
+
+- [Developer portal / API docs](https://portfolio-new-eta-tawny.vercel.app/docs): JSON API endpoints, auth notes (none needed), and MCP usage
+- [OpenAPI spec](https://portfolio-new-eta-tawny.vercel.app/openapi.json): OpenAPI 3.1 contract for /api/github, /api/presence, /api/contact
+- [MCP server](https://portfolio-new-eta-tawny.vercel.app/.well-known/mcp): Model Context Protocol server (Streamable HTTP)
+
+## Optional
+
+- [Sitemap](https://portfolio-new-eta-tawny.vercel.app/sitemap.xml): all crawlable routes
+- [Resume PDF](https://portfolio-new-eta-tawny.vercel.app/resume.pdf): print-ready resume

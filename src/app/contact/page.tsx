@@ -5,6 +5,7 @@ import Contact from "@/components/sections/Contact";
 export const metadata: Metadata = {
   title: "Contact",
   description: "Get in touch with Md Shagil Nizami — email, phone, GitHub, and LinkedIn.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

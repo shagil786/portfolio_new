@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { profile, links } from "@/data/portfolioData";
 import GlitchText from "@/components/ui/GlitchText";
+import WebGLGuard from "@/components/three/WebGLGuard";
 import { useGameStore } from "@/store/useGameStore";
 
 // 3D scene is heavy → load only on the client, lazily, with a fallback.
@@ -65,7 +66,11 @@ export default function Hero() {
 
   return (
     <header className="relative flex min-h-[100svh] w-full items-center overflow-hidden">
-      {!lowPower && <HeroScene />}
+      {!lowPower && (
+        <WebGLGuard fallback={<div className="bg-cybergrid absolute inset-0 z-0 opacity-30" />}>
+          <HeroScene />
+        </WebGLGuard>
+      )}
       {lowPower && <div className="bg-cybergrid absolute inset-0 z-0 opacity-30" />}
 
       {/* gradient legibility wash */}

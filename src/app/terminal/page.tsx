@@ -5,6 +5,7 @@ import Terminal from "@/components/terminal/Terminal";
 export const metadata: Metadata = {
   title: "Terminal",
   description: "Full-screen hacker terminal — explore Md Shagil Nizami's portfolio by command.",
+  alternates: { canonical: "/terminal" },
 };
 
 export default function TerminalPage() {
